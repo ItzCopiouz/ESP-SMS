@@ -1,0 +1,30 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment (will be passed via env_file)
+.env
+
+# Data (mounted as volume)
+data/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+
+# Test files
+test_*.jpg
+*.test.py
+
+# macOS
+.DS_Store
+
