@@ -4,10 +4,10 @@ ESP32-CAM → OpenAI Vision → SMS notification pipeline.
 
 ## What It Does
 
-1. **ESP32-CAM setup** takes a photo and uploads it to your server
+1. **ESP32-CAM** takes a photo and uploads it to your server
 2. **FastAPI server** queues the job in SQLite
 3. **Worker** sends the image to OpenAI Vision for analysis
-4. **Twilio** sends the result as SMS to your phone
+4. **Twilio** sends the result as SMS to your phone (or Apple Watch)
 
 ## Quick Start
 
@@ -46,7 +46,7 @@ docker compose up -d
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `OPENAI_API_KEY` | Yes | Your OpenAI API key |
-| `OPENAI_MODEL` | No | Default: `gpt-5.2` |
+| `OPENAI_MODEL` | No | Default: `gpt-4o` |
 | `TWILIO_ACCOUNT_SID` | No | For SMS notifications |
 | `TWILIO_AUTH_TOKEN` | No | For SMS notifications |
 | `TWILIO_FROM_NUMBER` | No | Your Twilio phone number |
@@ -57,19 +57,21 @@ docker compose up -d
 - `POST /api/v1/capture` - Upload image (raw JPEG bytes, `X-Device-Id` header)
 - `GET /api/v1/results/{job_id}` - Get job status and results
 
-## Repo Layout
+## Project Structure
 
-- **firmware/**: ESP-IDF firmware for ESP32-CAM
-- **AI-Image-Processor/**: Python FastAPI backend + OpenAI integration
+```
+app/
+  main.py              # FastAPI app
+  config.py            # Settings from .env
+  worker.py            # Background job processor
+  core/
+    db.py              # SQLite operations
+    storage.py         # File I/O
+  api/v1/
+    capture.py         # Upload endpoint
+    results.py         # Results endpoint
+  services/
+    openai_vision.py   # OpenAI Vision API
+    notify_twilio.py   # SMS notifications
+```
 
-## Firmware Setup
-
-1. Navigate to `firmware/`
-2. Configure: `idf.py menuconfig` (set WiFi + backend URL)
-3. Flash: `idf.py flash monitor`
-
-## Backend Setup
-
-1. Navigate to `AI-Image-Processor/`
-2. Install deps: `pip install -r requirements.txt`
-3. Run: `python app/main.py`

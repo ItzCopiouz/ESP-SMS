@@ -1,3 +1,19 @@
+# ESP-IDF
+firmware/build/
+firmware/sdkconfig
+firmware/dependencies.lock
+firmware/managed_components/
+firmware/.cache/
+
+# Python / Backend
+AI-Image-Processor/venv/
+AI-Image-Processor/__pycache__/
+AI-Image-Processor/*.pyc
+AI-Image-Processor/.env
+AI-Image-Processor/data/images/
+AI-Image-Processor/data/results/
+AI-Image-Processor/data/*.db
+
 # Python
 __pycache__/
 *.py[cod]
@@ -11,9 +27,10 @@ venv/
 # Data (images, database, results)
 data/
 
-# IDE
-.idea/
+# IDEs
 .vscode/
+.idea/
+.cursor/
 *.swp
 *.swo
 
