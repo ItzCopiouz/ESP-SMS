@@ -43,4 +43,7 @@ test_*.jpg
 ImageProcessing.py
 
 # Markdown
-*.md
+/firmware/**/*.md
+/AI-Image-Processor/**/*.md
+/*plan*.md
+/*PLAN*.md
