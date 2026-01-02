@@ -1,0 +1,10 @@
+# ESP-IDF Component Manager configuration
+# This file tells the build system to download external components
+
+dependencies:
+  # The esp_camera driver from Espressif's component registry
+  # This is NOT built into ESP-IDF - we must explicitly add it
+  espressif/esp32-camera:
+    version: "^2.0.0"
+
+

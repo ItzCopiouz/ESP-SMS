@@ -1,0 +1,42 @@
+# Kconfig.projbuild - Custom menuconfig options for this project
+# These appear under "Component config" in menuconfig
+
+menu "ESP32-CAM Firmware Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "your_wifi_ssid"
+        help
+            The name of the WiFi network to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "your_wifi_password"
+        help
+            The password for the WiFi network.
+
+    config BACKEND_URL
+        string "Backend Server URL"
+        default "https://your-server.com/api/v1/capture"
+        help
+            The full URL of the backend endpoint to POST images to.
+            Must include protocol (http:// or https://) and full path.
+
+    config DEVICE_ID
+        string "Device ID"
+        default "ESP32CAM_001"
+        help
+            Unique identifier for this camera device.
+            Sent as X-Device-Id header with each request.
+
+    config WAKE_BUTTON_GPIO
+        int "Wake Button GPIO"
+        default 13
+        range 0 39
+        help
+            GPIO pin connected to the wake-up button.
+            Must be an RTC GPIO (0,2,4,12,13,14,15,25,26,27,32,33,34,35,36,39).
+
+endmenu
+
+

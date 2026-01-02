@@ -1,0 +1,26 @@
+services:
+  # FastAPI server
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data          # Persist images and database
+      - ./prompts:/app/prompts    # System prompt
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # Background worker
+  worker:
+    build: .
+    command: python -m app.worker
+    volumes:
+      - ./data:/app/data
+      - ./prompts:/app/prompts
+    env_file:
+      - .env
+    depends_on:
+      - api
+    restart: unless-stopped
+
