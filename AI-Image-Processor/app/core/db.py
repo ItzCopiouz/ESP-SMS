@@ -56,27 +56,35 @@ async def get_job(job_id: str) -> Optional[dict]:
 
 
 def claim_next_job() -> Optional[dict]:
-    """Automatically claim the oldest queued job. Returns None if no Jobs. """
+    """Atomically claim the oldest queued job. Returns None if no jobs."""
     conn = sqlite3.connect(settings.database_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    #find and claim at once i htink????
+    # Step 1: Find oldest queued job
     cursor.execute(
-        """
-        UPDATE jobs
-        SET status = 'processing', started_at = ?
-        WHERE job_id = (
-            SELECT job_id FROM jobs WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1
-        )
-        RETURNING *
-        """,
-        (datetime.utcnow().isoformat(),)
+        "SELECT job_id FROM jobs WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1"
     )
     row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    job_id = row["job_id"]
+    now = datetime.utcnow().isoformat()
+
+    # Step 2: Claim it
+    cursor.execute(
+        "UPDATE jobs SET status = 'processing', started_at = ? WHERE job_id = ?",
+        (now, job_id)
+    )
     conn.commit()
+
+    # Step 3: Fetch full job data
+    cursor.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,))
+    job = cursor.fetchone()
     conn.close()
-    return dict(row) if row else None
+    return dict(job) if job else None
 
 
 def complete_job(job_id: str, result_json_path: str, result_txt_path: str) -> None:

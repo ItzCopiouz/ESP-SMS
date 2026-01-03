@@ -50,7 +50,7 @@ def process_job(job: dict) -> None:
         complete_job(job_id, str(json_path), str(txt_path))
 
         # Send notification
-        result_url = f"{settings.base_url}/r/{job_id}"
+        result_url = f"{settings.base_url}/api/v1/results/{job_id}"
         send_notification(result["text"], result_url)
 
         logger.info(f"Job {job_id} completed successfully")

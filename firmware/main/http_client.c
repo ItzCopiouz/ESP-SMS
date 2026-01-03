@@ -6,6 +6,7 @@
 #include "config.h"
 #include "esp_log.h"
 #include "esp_http_client.h"
+#include "esp_crt_bundle.h"
 
 /* Tag for logging */
 static const char *TAG = "HTTP";
@@ -19,6 +20,7 @@ bool http_post_image(const uint8_t *image_data, size_t image_length)
         .url = CONFIG_BACKEND_URL,
         .method = HTTP_METHOD_POST,
         .timeout_ms = 10000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     
     
