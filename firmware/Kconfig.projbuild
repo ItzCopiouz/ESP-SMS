@@ -3,17 +3,8 @@
 
 menu "ESP32-CAM Firmware Configuration"
 
-    config WIFI_SSID
-        string "WiFi SSID"
-        default "your_wifi_ssid"
-        help
-            The name of the WiFi network to connect to.
-
-    config WIFI_PASSWORD
-        string "WiFi Password"
-        default "your_wifi_password"
-        help
-            The password for the WiFi network.
+    # WiFi credentials are now in main/wifi_secrets.h (gitignored)
+    # Copy wifi_secrets.h.example to wifi_secrets.h and add your networks
 
     config BACKEND_URL
         string "Backend Server URL"

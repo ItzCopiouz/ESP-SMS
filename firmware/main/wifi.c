@@ -1,9 +1,11 @@
 /*
  * wifi.c - WiFi connection management implementation
+ * 
+ * Supports multiple WiFi credentials - tries each in order until one connects.
  */
 
 #include "wifi.h"
-#include "config.h"
+#include "wifi_secrets.h"
 
 /* ESP-IDF includes */
 #include "esp_log.h"
@@ -13,6 +15,8 @@
 #include "nvs_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
+
+#include <string.h>
 
 /* Tag for logging */
 static const char *TAG = "WIFI";
@@ -25,11 +29,11 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT       BIT1  /* Connection failed */
 
 /* Retry counter */
-#define MAX_RETRY  5
+#define MAX_RETRY_PER_NETWORK  3
 static int s_retry_count = 0;
 
 /*
- * Event handler so like ESP-IDF calls this when WiFi events happen
+ * Event handler - ESP-IDF calls this when WiFi events happen
  */
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                 int32_t event_id, void *event_data)
@@ -39,19 +43,18 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         switch (event_id) {
             case WIFI_EVENT_STA_START:
                 /* WiFi hardware started - now try to connect */
-                ESP_LOGI(TAG, "WiFi started, connecting...");
                 esp_wifi_connect();
                 break;
                 
             case WIFI_EVENT_STA_DISCONNECTED:
-                /* We got disconnected - retry or give up */
-                if (s_retry_count < MAX_RETRY) {
+                /* We got disconnected - retry or give up on this network */
+                if (s_retry_count < MAX_RETRY_PER_NETWORK) {
                     s_retry_count++;
                     ESP_LOGW(TAG, "Disconnected, retrying (%d/%d)...", 
-                             s_retry_count, MAX_RETRY);
+                             s_retry_count, MAX_RETRY_PER_NETWORK);
                     esp_wifi_connect();
                 } else {
-                    ESP_LOGE(TAG, "Failed to connect after %d attempts", MAX_RETRY);
+                    /* Max retries for this network - signal failure to try next */
                     xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
                 }
                 break;
@@ -67,11 +70,57 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
+/*
+ * Try to connect to a specific network
+ * Returns true if connected, false if failed after retries
+ */
+static bool try_connect_to_network(const wifi_cred_t *cred)
+{
+    /* Reset retry counter for this network */
+    s_retry_count = 0;
+    
+    /* Clear any previous event bits */
+    xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT);
+    
+    /* Configure WiFi with this network's credentials */
+    wifi_config_t wifi_config = {
+        .sta = {
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+        },
+    };
+    
+    /* Copy SSID and password (must use strncpy for fixed-size arrays) */
+    strncpy((char *)wifi_config.sta.ssid, cred->ssid, sizeof(wifi_config.sta.ssid) - 1);
+    strncpy((char *)wifi_config.sta.password, cred->password, sizeof(wifi_config.sta.password) - 1);
+    
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    
+    /* Start connection attempt */
+    ESP_ERROR_CHECK(esp_wifi_connect());
+    
+    /* Wait for connection or failure (with timeout) */
+    EventBits_t bits = xEventGroupWaitBits(
+        s_wifi_event_group,
+        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+        pdFALSE,
+        pdFALSE,
+        pdMS_TO_TICKS(15000)  /* 15 second timeout per network */
+    );
+    
+    if (bits & WIFI_CONNECTED_BIT) {
+        return true;
+    }
+    
+    /* Disconnect cleanly before trying next network */
+    esp_wifi_disconnect();
+    return false;
+}
+
 bool wifi_init_and_connect(void)
 {
     esp_err_t ret;
     
-    /* Step 1: Initialize NVS cus WiFi needs this to store calibration data */
+    /* Step 1: Initialize NVS - WiFi needs this to store calibration data */
     ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_LOGW(TAG, "NVS corrupted, erasing...");
@@ -109,45 +158,35 @@ bool wifi_init_and_connect(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
         IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
 
-    /* Step 8: Configure WiFi with SSID and password */
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = CONFIG_WIFI_SSID,
-            .password = CONFIG_WIFI_PASSWORD,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-        },
-    };
-    
+    /* Step 8: Set WiFi mode and start */
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-
-    /* Step 9: Start WiFi */
-    ESP_LOGI(TAG, "Connecting to '%s'...", CONFIG_WIFI_SSID);
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    /* Step 10: Wait for connection or failure */
-    EventBits_t bits = xEventGroupWaitBits(
-        s_wifi_event_group,
-        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-        pdFALSE,
-        pdFALSE,
-        portMAX_DELAY
-    );
-
-    /* Check result */
-    if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "WiFi connected successfully");
-        return true;
-    } else {
-        ESP_LOGE(TAG, "WiFi connection failed");
-        return false;
+    /* Step 9: Try each network in order */
+    ESP_LOGI(TAG, "Trying %d configured WiFi networks...", WIFI_CRED_COUNT);
+    
+    for (int i = 0; i < WIFI_CRED_COUNT; i++) {
+        ESP_LOGI(TAG, "Attempting network %d/%d: '%s'", 
+                 i + 1, WIFI_CRED_COUNT, WIFI_CREDENTIALS[i].ssid);
+        
+        if (try_connect_to_network(&WIFI_CREDENTIALS[i])) {
+            ESP_LOGI(TAG, "WiFi connected successfully to '%s'", 
+                     WIFI_CREDENTIALS[i].ssid);
+            return true;
+        }
+        
+        ESP_LOGW(TAG, "Failed to connect to '%s'", WIFI_CREDENTIALS[i].ssid);
     }
+
+    ESP_LOGE(TAG, "All %d WiFi networks failed", WIFI_CRED_COUNT);
+    return false;
 }
 
 void wifi_disconnect(void)
 {
     ESP_LOGI(TAG, "Disconnecting WiFi...");
     
+    esp_wifi_disconnect();
     esp_wifi_stop();
     esp_wifi_deinit();
     
@@ -158,4 +197,3 @@ void wifi_disconnect(void)
     
     ESP_LOGI(TAG, "WiFi disconnected");
 }
-

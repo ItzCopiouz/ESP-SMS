@@ -8,13 +8,8 @@
 #pragma once
 
 /* ========== WiFi Configuration ========== */
-#ifndef CONFIG_WIFI_SSID
-#define CONFIG_WIFI_SSID "your_wifi_ssid"
-#endif
-
-#ifndef CONFIG_WIFI_PASSWORD
-#define CONFIG_WIFI_PASSWORD "your_wifi_password"
-#endif
+/* WiFi credentials are now in wifi_secrets.h (gitignored) */
+/* Copy wifi_secrets.h.example to wifi_secrets.h and add your networks */
 
 /* ========== Backend Configuration ========== */
 #ifndef CONFIG_BACKEND_URL
