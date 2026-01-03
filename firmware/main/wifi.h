@@ -1,21 +1,22 @@
 /*
- * wifi.h - WiFi connection management
+ * wifi.h - making sure we have an internet connection
  */
 
 #pragma once
 
-#include <stdbool.h>  /* For bool type */
+#include <stdbool.h>
 
 /*
- * Initialize WiFi in station mode and connect to the configured network.
- * This function blocks until connected or timeout.
- * 
- * Returns: true if connected successfully, false on failure/timeout
+ * fire up wifi and try to find a network
  */
 bool wifi_init_and_connect(void);
 
 /*
- * Disconnect from WiFi and free resources.
- * Call this before entering deep sleep to ensure clean shutdown.
+ * shut down wifi before we sleep
  */
 void wifi_disconnect(void);
+
+/*
+ * how strong is the signal? (dBm)
+ */
+int wifi_get_rssi(void);

@@ -9,12 +9,8 @@
 #include <stdint.h>   /* For uint8_t type */
 
 /*
- * Initialize the OV3660 camera with fixed settings:
- * - Resolution: VGA (640x480)
- * - Format: JPEG
- * - Quality: 15 (good balance of quality and size)
- * 
- * Returns: true on success, false on failure
+ * setup the camera sensor
+ * returns true if it worked, false if it's broken
  */
 bool camera_init(void);
 

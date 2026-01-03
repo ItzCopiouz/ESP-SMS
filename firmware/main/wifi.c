@@ -32,8 +32,16 @@ static EventGroupHandle_t s_wifi_event_group;
 #define MAX_RETRY_PER_NETWORK  3
 static int s_retry_count = 0;
 
+/* Flag to track if we're actively trying to connect (prevents race condition) */
+static bool s_connecting = false;
+
 /*
  * Event handler - ESP-IDF calls this when WiFi events happen
+ * 
+ * NOTE: We do NOT call esp_wifi_connect() on WIFI_EVENT_STA_START anymore.
+ * This was causing a race condition where connect() was called twice:
+ * once here and once in try_connect_to_network(). Now we only call it
+ * from try_connect_to_network() for explicit control.
  */
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                 int32_t event_id, void *event_data)
@@ -42,12 +50,17 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT) {
         switch (event_id) {
             case WIFI_EVENT_STA_START:
-                /* WiFi hardware started - now try to connect */
-                esp_wifi_connect();
+                /* WiFi hardware started - DO NOT connect here, let try_connect_to_network() handle it */
+                ESP_LOGI(TAG, "WiFi STA started, ready to connect");
                 break;
                 
             case WIFI_EVENT_STA_DISCONNECTED:
                 /* We got disconnected - retry or give up on this network */
+                if (!s_connecting) {
+                    /* Not actively connecting, ignore spurious disconnect */
+                    break;
+                }
+                
                 if (s_retry_count < MAX_RETRY_PER_NETWORK) {
                     s_retry_count++;
                     ESP_LOGW(TAG, "Disconnected, retrying (%d/%d)...", 
@@ -55,6 +68,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                     esp_wifi_connect();
                 } else {
                     /* Max retries for this network - signal failure to try next */
+                    s_connecting = false;
                     xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
                 }
                 break;
@@ -66,6 +80,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Connected! IP: " IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_count = 0;
+        s_connecting = false;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
@@ -76,8 +91,9 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
  */
 static bool try_connect_to_network(const wifi_cred_t *cred)
 {
-    /* Reset retry counter for this network */
+    /* Reset state for this network */
     s_retry_count = 0;
+    s_connecting = true;
     
     /* Clear any previous event bits */
     xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT);
@@ -95,8 +111,13 @@ static bool try_connect_to_network(const wifi_cred_t *cred)
     
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     
-    /* Start connection attempt */
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    /* Start connection attempt - this is the ONLY place we call esp_wifi_connect() initially */
+    esp_err_t err = esp_wifi_connect();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_wifi_connect() failed: %s", esp_err_to_name(err));
+        s_connecting = false;
+        return false;
+    }
     
     /* Wait for connection or failure (with timeout) */
     EventBits_t bits = xEventGroupWaitBits(
@@ -112,6 +133,7 @@ static bool try_connect_to_network(const wifi_cred_t *cred)
     }
     
     /* Disconnect cleanly before trying next network */
+    s_connecting = false;
     esp_wifi_disconnect();
     return false;
 }
@@ -186,6 +208,7 @@ void wifi_disconnect(void)
 {
     ESP_LOGI(TAG, "Disconnecting WiFi...");
     
+    s_connecting = false;
     esp_wifi_disconnect();
     esp_wifi_stop();
     esp_wifi_deinit();
@@ -196,4 +219,13 @@ void wifi_disconnect(void)
     }
     
     ESP_LOGI(TAG, "WiFi disconnected");
+}
+
+int wifi_get_rssi(void)
+{
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        return ap_info.rssi;
+    }
+    return 0;  /* Return 0 if not connected */
 }
