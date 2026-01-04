@@ -8,12 +8,12 @@ from openai import OpenAI
 
 from app.config import settings
 
-# Force reload .env to override any shell environment variables
+# reload .env so it overrides anything in the shell
 load_dotenv(override=True)
 
 
 def load_system_prompt() -> str:
-    """Load the system prompt from the file."""
+    """grab the system prompt from its file"""
     path = settings.system_prompt_path
     if path.exists():
         return path.read_text().strip()
@@ -22,19 +22,19 @@ def load_system_prompt() -> str:
 
 def analyze_image(image_path: Path) -> dict:
     """
-    Send image to OpenAI Vision and get analysis.
-    Returns dict with 'raw_response' (full JSON) and 'text' (extracted message).
+    send the photo to openai vision and see what it says
+    returns a dict with the raw response and the clean text
     """
-    # Read and encode the image as base64
+    # encode the image so we can send it
     image_bytes = image_path.read_bytes()
     base64_image = base64.b64encode(image_bytes).decode("utf-8")
 
-    # Create client and load prompt (use os.environ to get overridden value from .env)
+    # setup the client and prompt
     api_key = os.environ.get("OPENAI_API_KEY", settings.openai_api_key)
     client = OpenAI(api_key=api_key)
     system_prompt = load_system_prompt()
 
-    # Call the Vision API
+    # hit up the vision api
     response = client.chat.completions.create(
         model=settings.openai_model,
         messages=[
@@ -54,10 +54,10 @@ def analyze_image(image_path: Path) -> dict:
         max_completion_tokens=2000,
     )
 
-    # Extract the text response
+    # grab just the text part
     text = response.choices[0].message.content
 
-    # Return both raw response and extracted text
+    # return the whole thing and the text
     return {
         "raw_response": response.model_dump(),
         "text": text,

@@ -6,7 +6,7 @@ from pathlib import Path
 from app.config import settings
 from app.core.db import claim_next_job, complete_job, fail_job
 from app.services.openai_vision import analyze_image
-from app.services.notify_twilio import send_notification
+from app.services.notify_pushover import send_notification
 
 # Logging setup
 logging.basicConfig(

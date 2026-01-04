@@ -1,0 +1,11 @@
+{
+    # Global options
+    email your-email@example.com
+}
+
+# Replace this with your actual domain name
+YOUR_DOMAIN.com {
+    # Reverse proxy all requests to the API service
+    reverse_proxy api:8000
+}
+

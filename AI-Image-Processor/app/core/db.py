@@ -8,23 +8,22 @@ from app.config import settings
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (
-    job_id TEXT PRIMARY KEY,
-    device_id TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'queued',
-    image_path TEXT,
-    result_json_path TEXT,
-    result_txt_path TEXT,
-    error TEXT,
-    started_at TEXT,
-    finished_at TEXT
+    job_id TEXT PRIMARY KEY,    -- unique fingerprint for this event
+    device_id TEXT NOT NULL,   -- which camera sent the photo
+    created_at TEXT NOT NULL,  -- when it hit the server
+    status TEXT NOT NULL DEFAULT 'queued', -- queued, processing, done, or failed
+    image_path TEXT,           -- where the jpg is hiding
+    result_json_path TEXT,     -- raw ai data
+    result_txt_path TEXT,      -- clean text for the sms
+    error TEXT,                -- what went wrong (if anything)
+    started_at TEXT,           -- when the worker grabbed it
+    finished_at TEXT           -- when we finished the whole thing
 );
 """
 
 def init_db() -> None:
-    "create the friggin table yo"
-    settings.database_path.parent.mkdir(parents=True, exist_ok=True
-    )
+    "create the table if it doesn't exist yet"
+    settings.database_path.parent.mkdir(parents=True, exist_ok=True)
 
     conn = sqlite3.connect(settings.database_path)
     conn.executescript(SCHEMA)
@@ -33,7 +32,7 @@ def init_db() -> None:
 
 
 async def create_job(job_id: str, device_id: str, image_path: str) -> None:
-    """Insert a new job into the database."""
+    """toss a new job into the database"""
     async with aiosqlite.connect(settings.database_path) as db:
         await db.execute(
             """
@@ -45,7 +44,7 @@ async def create_job(job_id: str, device_id: str, image_path: str) -> None:
         await db.commit()
 
 async def get_job(job_id: str) -> Optional[dict]:
-    """Fetch a job by ID. Returns None if not found."""
+    """find a job by its id"""
     async with aiosqlite.connect(settings.database_path) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute( 
@@ -56,12 +55,12 @@ async def get_job(job_id: str) -> Optional[dict]:
 
 
 def claim_next_job() -> Optional[dict]:
-    """Atomically claim the oldest queued job. Returns None if no jobs."""
+    """grab the oldest job that's still waiting"""
     conn = sqlite3.connect(settings.database_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    # Step 1: Find oldest queued job
+    # Step 1: find the next one in line
     cursor.execute(
         "SELECT job_id FROM jobs WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1"
     )
@@ -73,14 +72,14 @@ def claim_next_job() -> Optional[dict]:
     job_id = row["job_id"]
     now = datetime.utcnow().isoformat()
 
-    # Step 2: Claim it
+    # Step 2: mark it as ours so nobody else touches it
     cursor.execute(
         "UPDATE jobs SET status = 'processing', started_at = ? WHERE job_id = ?",
         (now, job_id)
     )
     conn.commit()
 
-    # Step 3: Fetch full job data
+    # Step 3: get all the info for the worker
     cursor.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,))
     job = cursor.fetchone()
     conn.close()
@@ -88,7 +87,7 @@ def claim_next_job() -> Optional[dict]:
 
 
 def complete_job(job_id: str, result_json_path: str, result_txt_path: str) -> None:
-    """Mark a job as successfully completed."""
+    """mark the job as finished and save the results"""
     conn = sqlite3.connect(settings.database_path)
     conn.execute(
         """
@@ -105,7 +104,7 @@ def complete_job(job_id: str, result_json_path: str, result_txt_path: str) -> No
     conn.close()
 
 def fail_job(job_id: str, error: str) -> None:
-    """Mark a job as failed with an error message."""
+    """something broke cuh. log the error"""
     conn = sqlite3.connect(settings.database_path)
     conn.execute(
         """
@@ -119,8 +118,3 @@ def fail_job(job_id: str, error: str) -> None:
     )
     conn.commit()
     conn.close()
-
-
-
-
-

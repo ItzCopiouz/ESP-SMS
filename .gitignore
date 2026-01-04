@@ -4,6 +4,7 @@ firmware/sdkconfig
 firmware/dependencies.lock
 firmware/managed_components/
 firmware/.cache/
+firmware/main/wifi_secrets.h
 
 # Python / Backend
 AI-Image-Processor/venv/

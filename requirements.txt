@@ -5,6 +5,5 @@ python-dotenv>=1.0.1
 pydantic-settings>=2.12.0
 openai>=1.67.0
 Pillow>=11.1.0
-twilio>=9.0.0
 aiofiles>=24.1.0
 requests>=2.31.0

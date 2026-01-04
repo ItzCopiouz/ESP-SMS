@@ -12,18 +12,18 @@ async def capture_image(
     request: Request,
     x_device_id: str = Header(..., alias="X-Device-Id"),
 ):
-    # Read JPEG bytes from request body
+    # grab the raw jpeg bytes from the request
     image_data = await request.body()
 
-    # Did we get anything?
+    # check if we actually got a photo
     if not image_data:
-        raise HTTPException(status_code=400, detail="No image data received")
+        raise HTTPException(status_code=400, detail="no photo data here")
 
-    # Generate unique job id and save img
+    # make a unique id and save the file
     job_id = generate_job_id(x_device_id)
     image_path = await save_image(job_id, image_data)
 
-    # Record in db
+    # log it in the database
     await create_job(job_id, x_device_id, str(image_path))
 
     # Return success response
@@ -33,4 +33,3 @@ async def capture_image(
         "status": "queued",
         "result_url": f"{settings.base_url}/api/v1/results/{job_id}",
     }
-

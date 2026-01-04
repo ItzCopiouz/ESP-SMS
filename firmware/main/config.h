@@ -10,7 +10,7 @@
 
 /* where the server lives */
 #ifndef CONFIG_BACKEND_URL
-#define CONFIG_BACKEND_URL "https://your-server.com/api/v1/capture"
+#define CONFIG_BACKEND_URL "https://esp32.samcc.work/api/v1/capture"
 #endif
 
 /* what we call this specific camera */

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5.2-2025-12-11"
     system_prompt_path: Path = Path("./prompts/system.txt")
 
-    # Twilio (optional - falls back to logging if not set)
+    # twilio info (optional, will just log to console if missing)
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     twilio_from_number: Optional[str] = None

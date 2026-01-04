@@ -1,13 +1,13 @@
 # ESP-SMS
 
-ESP32-CAM → OpenAI Vision → SMS notification pipeline.
+ESP32-CAM → OpenAI Vision → Pushover notification pipeline.
 
 ## What It Does
 
 1. **ESP32-CAM setup** takes a photo and uploads it to your server
 2. **FastAPI server** queues the job in SQLite
 3. **Worker** sends the image to OpenAI Vision for analysis
-4. **Twilio** sends the result as SMS to your phone
+4. **Pushover** sends the result as a notification to your phone
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 # Configure
 cp .env.example .env
-# Edit .env with your OpenAI API key (and optionally Twilio)
+# Edit .env with your OpenAI API key (and optionally Pushover)
 
 # Run (two terminals)
 uvicorn app.main:app --host 0.0.0.0 --port 8000  # Terminal 1
@@ -47,10 +47,8 @@ docker compose up -d
 |----------|----------|-------------|
 | `OPENAI_API_KEY` | Yes | Your OpenAI API key |
 | `OPENAI_MODEL` | No | Default: `gpt-5.2` |
-| `TWILIO_ACCOUNT_SID` | No | For SMS notifications |
-| `TWILIO_AUTH_TOKEN` | No | For SMS notifications |
-| `TWILIO_FROM_NUMBER` | No | Your Twilio phone number |
-| `TWILIO_TO_NUMBER` | No | Your personal phone number |
+| `PUSHOVER_USER_KEY` | No | For Pushover notifications |
+| `PUSHOVER_API_TOKEN` | No | For Pushover notifications |
 
 ## API Endpoints
 

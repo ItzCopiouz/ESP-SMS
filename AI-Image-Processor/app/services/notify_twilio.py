@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def is_twilio_configured() -> bool:
-    """Check if Twilio is configured."""
+    """see if we have everything needed for twilio"""
     return all([
         settings.twilio_account_sid,
         settings.twilio_auth_token,
@@ -17,25 +17,23 @@ def is_twilio_configured() -> bool:
 
 def send_notification(result_text: str, result_url: str) -> None:
     """
-    Send SMS notification with result.
-    Falls back to logging if Twilio not configured.
+    send an sms with the results
+    if twilio isn't set up, we just log it to the terminal
     """
-    # Truncate text     
-    max_chars = 1000
+    # don't let the text get too long     
+    max_chars = 1500
     if len(result_text) > max_chars:
         truncated = result_text[:max_chars] + "..."
     else:
         truncated = result_text
 
-    message_body = f"{truncated}\n\nFull result: {result_url}"
-
-
+    message_body = f"{truncated}\n\nfull results: {result_url}"
 
     if not is_twilio_configured():
-        logger.info (f"[SMS FALLBACK] Would send: {message_body}")
+        logger.info (f"[SMS FALLBACK] would have sent: {message_body}")
         return
 
-    #send via Twilio
+    # send it via twilio
     client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
 
     message = client.messages.create(
@@ -44,6 +42,4 @@ def send_notification(result_text: str, result_url: str) -> None:
         to=settings.twilio_to_number,
     )
 
-    logger.info (f"SMS sent: {message.sid}")
-
-
+    logger.info (f"sms is on its way: {message.sid}")

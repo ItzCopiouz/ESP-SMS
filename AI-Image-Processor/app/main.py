@@ -20,9 +20,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-#routers
+# setup the api routes
 app.include_router(capture.router, prefix="/api/v1")
 app.include_router(results.router, prefix="/api/v1")
-
-
-
