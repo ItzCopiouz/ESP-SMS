@@ -12,6 +12,12 @@ __pycache__/
 # Data (mounted as volume)
 data/
 
+# Legacy/unused backend copy (avoid accidental inclusion in backend image)
+AI-Image-Processor/
+
+# Firmware (not needed in backend image)
+firmware/
+
 # Git
 .git/
 .gitignore

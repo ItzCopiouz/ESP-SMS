@@ -9,7 +9,7 @@ import requests
 from pathlib import Path
 
 # Configuration
-API_URL = "http://localhost:8000/api/v1/capture"
+API_URL = "https://esp32.samcc.work/api/v1/capture"
 DEVICE_ID = "TEST_DEVICE"
 
 
@@ -34,18 +34,21 @@ def main():
 
     # Send to API
     print(f"Uploading to {API_URL}...")
-    response = requests.post(
-        API_URL,
-        headers={
-            "X-Device-Id": DEVICE_ID,
-            "Content-Type": "image/jpeg",
-        },
-        data=image_data,
-    )
+    try:
+        response = requests.post(
+            API_URL,
+            headers={
+                "X-Device-Id": DEVICE_ID,
+                "Content-Type": "image/jpeg",
+            },
+            data=image_data,
+        )
 
-    # Print result
-    print(f"Status: {response.status_code}")
-    print(f"Response: {response.json()}")
+        # Print result
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.json()}")
+    except Exception as e:
+        print(f"Error sending request: {e}")
 
 
 if __name__ == "__main__":

@@ -5,8 +5,7 @@
 #pragma once
 
 /* wifi setup */
-/* your actual wifi credentials go in wifi_secrets.h (which is gitignored) */
-/* check out wifi_secrets.h.example if you need a template */
+/* your actual wifi credentials go in wifi_secrets.h */
 
 /* where the server lives */
 #ifndef CONFIG_BACKEND_URL

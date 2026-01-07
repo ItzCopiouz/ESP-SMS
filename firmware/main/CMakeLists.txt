@@ -18,6 +18,9 @@ idf_component_register(
         nvs_flash
         esp_netif
         driver
+        esp_adc
+        esp-tls
+        esp_timer
 )
 
 

@@ -3,10 +3,11 @@ services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      # Bind to localhost only; Cloudflare Tunnel should forward to this port
+      - "127.0.0.1:8001:8000"
     volumes:
-      - ./data:/app/data          # Persist images and database
-      - ./prompts:/app/prompts    # System prompt
+      - esp32_data:/app/data          # Persist images and database (named volume)
+      - ./prompts:/app/prompts:ro     # System prompt (read-only)
     env_file:
       - .env
     restart: unless-stopped
@@ -16,11 +17,14 @@ services:
     build: .
     command: python -m app.worker
     volumes:
-      - ./data:/app/data
-      - ./prompts:/app/prompts
+      - esp32_data:/app/data
+      - ./prompts:/app/prompts:ro
     env_file:
       - .env
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  esp32_data:
 

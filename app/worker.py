@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from app.config import settings
-from app.core.db import claim_next_job, complete_job, fail_job
+from app.core.db import claim_next_job, complete_job, fail_job, init_db
 from app.services.openai_vision import analyze_image
 from app.services.notify_pushover import send_notification
 
@@ -50,7 +50,7 @@ def process_job(job: dict) -> None:
         complete_job(job_id, str(json_path), str(txt_path))
 
         # Send notification
-        result_url = f"{settings.base_url}/r/{job_id}"
+        result_url = f"{settings.base_url}/api/v1/results/{job_id}"
         send_notification(result["text"], result_url)
 
         logger.info(f"Job {job_id} completed successfully")
@@ -62,6 +62,14 @@ def process_job(job: dict) -> None:
 
 def run_worker() -> None:
     """Run the worker: claim jobs, process them, repeat."""
+    # Ensure DB schema exists (avoids race if worker starts before API init)
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"Worker failed to initialize database: {e}")
+        raise
+
+    logger.info("Worker started, watching for jobs...")
     while True:
         # Claim next job
         job = claim_next_job()

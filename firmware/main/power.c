@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
 #include "soc/rtc_cntl_reg.h"
@@ -63,14 +64,13 @@ static bool init_battery_adc(void)
     }
     
     /* try to calibrate it so the numbers are actually right */
-    adc_cali_curve_fitting_config_t cali_cfg = {
+    adc_cali_line_fitting_config_t cali_cfg = {
         .unit_id = ADC_UNIT_1,
-        .chan = BATTERY_ADC_CHANNEL,
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_12,
     };
     
-    ret = adc_cali_create_scheme_curve_fitting(&cali_cfg, &s_adc_cali_handle);
+    ret = adc_cali_create_scheme_line_fitting(&cali_cfg, &s_adc_cali_handle);
     if (ret == ESP_OK) {
         s_adc_calibrated = true;
         ESP_LOGI(TAG, "adc calibration is good to go");
@@ -135,7 +135,7 @@ void power_enter_deep_sleep(void)
     
     /* clean up adc before we pass out */
     if (s_adc_cali_handle != NULL) {
-        adc_cali_delete_scheme_curve_fitting(s_adc_cali_handle);
+        adc_cali_delete_scheme_line_fitting(s_adc_cali_handle);
         s_adc_cali_handle = NULL;
     }
     if (s_adc_handle != NULL) {

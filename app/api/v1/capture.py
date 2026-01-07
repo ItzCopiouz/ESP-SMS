@@ -31,6 +31,6 @@ async def capture_image(
         "ok": True,
         "job_id": job_id,
         "status": "queued",
-        "result_url": f"{settings.base_url}/r/{job_id}",
+        "result_url": f"{settings.base_url}/api/v1/results/{job_id}",
     }
 

@@ -1,9 +1,9 @@
 """
-Heartbeat/telemetry endpoint for ESP32-CAM devices.
+Heartbeat/telemetry endpoint for ESP32-D0WD-V3.
 
 Receives periodic health updates from devices including:
 - Battery voltage and percentage
-- WiFi signal strength (RSSI)
+- WiFi signal strength 
 - Free heap memory
 - Uptime since boot
 """
