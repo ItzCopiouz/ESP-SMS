@@ -4,7 +4,7 @@ ESP32-CAM → OpenAI Vision → Pushover notification pipeline.
 
 ## Recent Updates
 
-- **ESP-IDF 5.x Compatibility**: Updated the firmware code to comply with ESP-IDF 5.x standards to ensure proper flashing and operation on newer SDK versions.
+- **ESP-IDF 5.x Compatibility**: Updated code to comply with ESP-IDF 5.x standards so it would flash properly.
 
 ## What It Does
 
