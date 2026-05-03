@@ -1,5 +1,5 @@
 /*
- * http_client.h - talking to the backend server
+ * http_client.h - backend HTTP client
  */
 
 #pragma once
@@ -8,12 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/*
- * upload a jpeg to the server
- */
+/* Upload a JPEG to the backend capture endpoint. */
 bool http_post_image(const uint8_t *image_data, size_t image_length);
 
-/*
- * tell the server we're still alive and send some stats
- */
+/* Send device telemetry to the backend heartbeat endpoint. */
 bool http_post_heartbeat(int battery_mv, int battery_percent, int uptime_ms);

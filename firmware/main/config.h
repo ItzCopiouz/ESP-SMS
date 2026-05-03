@@ -1,31 +1,26 @@
 /*
- * config.h - all the settings for the esp32-cam
+ * config.h - ESP32-CAM firmware settings
  */
 
 #pragma once
 
-/* wifi setup */
-/* your actual wifi credentials go in wifi_secrets.h */
+/* WiFi credentials live in wifi_secrets.h. */
 
-/* where the server lives */
 #ifndef CONFIG_BACKEND_URL
 #define CONFIG_BACKEND_URL "https://esp32.samcc.work/api/v1/capture"
 #endif
 
-/* what we call this specific camera */
 #ifndef CONFIG_DEVICE_ID
 #define CONFIG_DEVICE_ID "ESP32CAM_001"
 #endif
 
-/* pin for the wake-up button */
 #ifndef CONFIG_WAKE_BUTTON_GPIO
 #define CONFIG_WAKE_BUTTON_GPIO 13
 #endif
 
-/* the bright led for the flash */
 #define FLASH_LED_GPIO 4
 
-/* camera pin mapping (should be right for most esp32-cam boards) */
+/* Camera pin mapping for common ESP32-CAM boards. */
 #define CAM_PIN_D0     5
 #define CAM_PIN_D1     18
 #define CAM_PIN_D2     19
@@ -41,20 +36,18 @@
 #define CAM_PIN_SDA    26
 #define CAM_PIN_SCL    27
 #define CAM_PIN_PWDN   32
-#define CAM_PIN_RESET  -1  /* not using a reset pin */
+#define CAM_PIN_RESET  -1  /* No reset pin. */
 
 /* camera tweaks */
 #define CAM_XCLK_FREQ  20000000  /* 20 MHz clock is standard */
 #define CAM_JPEG_QUALITY 15      /* 0 to 63 (lower is better quality) */
 
 /* battery monitoring stuff */
-/* uses GPIO36 (ADC1 Channel 0) by default */
+/* Uses GPIO36 (ADC1 Channel 0) by default. */
 #define BATTERY_ADC_CHANNEL ADC_CHANNEL_0
 
 /* 
- * if you're using a voltage divider (like 100k+100k), set this to 2.
- * it multiplies the reading to get the real battery voltage.
+ * If using a voltage divider, set this to the divider multiplier.
+ * For example, a 100k+100k divider should use 2.
  */
 #define BATTERY_DIVIDER_FACTOR 2
-
-/* all done with config */

@@ -12,43 +12,35 @@
 
 static const char *TAG = "MAIN";
 
-/*
- * app_main - Entry point (like Python's if __name__ == "__main__")
- */
 void app_main(void)
 {
     ESP_LOGI(TAG, "========================================");
     ESP_LOGI(TAG, "ESP32-CAM is waking up...");
     ESP_LOGI(TAG, "========================================");
 
-    /* see if we just woke up or if this is a fresh start */
+    /* Check whether this boot came from deep sleep or a fresh reset. */
     bool from_sleep = power_woke_from_sleep();
-    (void)from_sleep;  /* don't really need this yet but keeping it around just in case */
+    (void)from_sleep;
     
-    /* step 1: get the power situation sorted (kill the led, setup wake, check for low volts) */
     if (!power_init()) {
-        ESP_LOGE(TAG, "power stuff failed, gg bruz");
+        ESP_LOGE(TAG, "Power initialization failed");
         return;
     }
     
-    /* check if we died last time because the battery was too low */
     if (power_was_brownout_reset()) {
-        ESP_LOGW(TAG, "we crashed last time! voltage was too low.");
+        ESP_LOGW(TAG, "Previous reset was caused by brownout");
         ESP_LOGW(TAG, "battery check: %d mV (%d%%)", 
                  power_get_battery_mv(), power_get_battery_percent());
     }
     
-    /* step 2: get online */
     if (!wifi_init_and_connect()) {
-        ESP_LOGE(TAG, "wifi failed, going back to sleep to try later");
+        ESP_LOGE(TAG, "WiFi failed; returning to deep sleep");
         power_enter_deep_sleep();
         return;
     }
     
-    /* step 3: wake up the camera */
     if (!camera_init()) {
-        ESP_LOGE(TAG, "camera is acting up");
-        /* at least tell the server we're alive before we pass out */
+        ESP_LOGE(TAG, "Camera initialization failed");
         http_post_heartbeat(power_get_battery_mv(), power_get_battery_percent(), power_get_uptime_ms());
         wifi_disconnect();
         power_enter_deep_sleep();
@@ -59,8 +51,7 @@ void app_main(void)
     uint8_t *image_data;
     size_t image_length;
     if (!camera_capture(&image_data, &image_length)) {
-        ESP_LOGE(TAG, "couldn't take the pic");
-        /* tell the server we're still here */
+        ESP_LOGE(TAG, "Image capture failed");
         http_post_heartbeat(power_get_battery_mv(), power_get_battery_percent(), power_get_uptime_ms());
         camera_deinit();
         wifi_disconnect();
@@ -71,7 +62,7 @@ void app_main(void)
     /* Step 5: Send image to backend */
     bool sent = http_post_image(image_data, image_length);
     if (sent) {
-        ESP_LOGI(TAG, "photo sent!");
+        ESP_LOGI(TAG, "Photo sent");
     } else {
         ESP_LOGW(TAG, "Failed to send image after retries");
     }

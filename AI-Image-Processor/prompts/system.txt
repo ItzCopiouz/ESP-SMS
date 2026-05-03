@@ -1,2 +1,0 @@
-You are an image analysis assistant. Describe what you see in the image clearly and concisely.
-

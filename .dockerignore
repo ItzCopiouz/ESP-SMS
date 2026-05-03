@@ -8,12 +8,11 @@ __pycache__/
 
 # Environment (will be passed via env_file)
 .env
+.env.*
+!.env.example
 
 # Data (mounted as volume)
 data/
-
-# Legacy/unused backend copy (avoid accidental inclusion in backend image)
-AI-Image-Processor/
 
 # Firmware (not needed in backend image)
 firmware/
@@ -33,4 +32,3 @@ test_*.jpg
 
 # macOS
 .DS_Store
-

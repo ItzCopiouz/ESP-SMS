@@ -1,6 +1,7 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import logging
+
+from fastapi import FastAPI
 
 from app.core.db import init_db
 from app.api.v1 import capture, results, heartbeat
@@ -17,9 +18,8 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized with WAL mode")
 
-    yield 
+    yield
 
-    # Shutdown
     logger.info("Shutting down...")
 
 
@@ -32,6 +32,3 @@ app = FastAPI(
 app.include_router(capture.router, prefix="/api/v1")
 app.include_router(results.router, prefix="/api/v1")
 app.include_router(heartbeat.router, prefix="/api/v1")
-
-
-

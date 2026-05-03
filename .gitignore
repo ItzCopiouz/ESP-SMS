@@ -6,15 +6,6 @@ firmware/managed_components/
 firmware/.cache/
 firmware/main/wifi_secrets.h
 
-# Python / Backend
-AI-Image-Processor/venv/
-AI-Image-Processor/__pycache__/
-AI-Image-Processor/*.pyc
-AI-Image-Processor/.env
-AI-Image-Processor/data/images/
-AI-Image-Processor/data/results/
-AI-Image-Processor/data/*.db
-
 # Python
 __pycache__/
 *.py[cod]
@@ -24,6 +15,8 @@ venv/
 
 # Environment
 .env
+.env.*
+!.env.example
 
 # Data (images, database, results)
 data/
@@ -45,6 +38,5 @@ ImageProcessing.py
 
 # Markdown
 /firmware/**/*.md
-/AI-Image-Processor/**/*.md
 /*plan*.md
 /*PLAN*.md

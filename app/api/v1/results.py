@@ -4,6 +4,7 @@ from app.core.db import get_job
 
 router = APIRouter()
 
+
 @router.get("/results/{job_id}")
 async def get_result(job_id: str):
     """Get job status and results."""

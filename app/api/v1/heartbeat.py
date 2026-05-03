@@ -1,17 +1,8 @@
-"""
-Heartbeat/telemetry endpoint for ESP32-D0WD-V3.
-
-Receives periodic health updates from devices including:
-- Battery voltage and percentage
-- WiFi signal strength 
-- Free heap memory
-- Uptime since boot
-"""
+import logging
+from typing import Optional
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from typing import Optional
-import logging
 
 from app.core.db import record_heartbeat, get_latest_heartbeat
 from app.services.notify_pushover import send_low_battery_alert
@@ -25,6 +16,7 @@ LOW_BATTERY_THRESHOLD = 20
 
 class HeartbeatPayload(BaseModel):
     """Telemetry data from ESP32-CAM device."""
+
     battery_voltage: Optional[int] = None  # millivolts
     battery_percent: Optional[int] = None  # 0-100
     wifi_rssi: Optional[int] = None  # dBm (typically -30 to -90)
@@ -38,19 +30,20 @@ async def receive_heartbeat(
     x_device_id: str = Header(..., alias="X-Device-Id"),
 ):
     """
-    Receive heartbeat/telemetry from an ESP32-CAM device.
-    
-    Records the data to the database and optionally triggers
-    alerts for low battery conditions.
+    Receive heartbeat telemetry from an ESP32-CAM device.
+
+    Records the data to the database and sends an alert for low battery states.
     """
     logger.info(
-        f"Heartbeat from {x_device_id}: "
-        f"battery={payload.battery_percent}% ({payload.battery_voltage}mV), "
-        f"rssi={payload.wifi_rssi}dBm, heap={payload.free_heap}B, "
-        f"uptime={payload.uptime_ms}ms"
+        "Heartbeat from %s: battery=%s%% (%smV), rssi=%sdBm, heap=%sB, uptime=%sms",
+        x_device_id,
+        payload.battery_percent,
+        payload.battery_voltage,
+        payload.wifi_rssi,
+        payload.free_heap,
+        payload.uptime_ms,
     )
-    
-    # Record to database
+
     await record_heartbeat(
         device_id=x_device_id,
         battery_voltage=payload.battery_voltage,
@@ -59,12 +52,15 @@ async def receive_heartbeat(
         free_heap=payload.free_heap,
         uptime_ms=payload.uptime_ms,
     )
-    
-    # Check for low battery and send alert if needed
+
     if payload.battery_percent is not None and payload.battery_percent <= LOW_BATTERY_THRESHOLD:
-        logger.warning(f"Low battery alert for {x_device_id}: {payload.battery_percent}%")
+        logger.warning(
+            "Low battery alert for %s: %s%%",
+            x_device_id,
+            payload.battery_percent,
+        )
         send_low_battery_alert(x_device_id, payload.battery_percent, payload.battery_voltage)
-    
+
     return {
         "ok": True,
         "device_id": x_device_id,
@@ -76,13 +72,12 @@ async def receive_heartbeat(
 async def get_device_status(device_id: str):
     """
     Get the latest heartbeat/status for a specific device.
-    
+
     Useful for checking if a device is online and its battery status.
     """
     heartbeat = await get_latest_heartbeat(device_id)
-    
+
     if not heartbeat:
         raise HTTPException(status_code=404, detail="No heartbeat found for this device")
-    
-    return heartbeat
 
+    return heartbeat

@@ -1,6 +1,7 @@
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -15,7 +16,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("./data")
     database_path: Path = Path("./data/app.db")
 
-    # Sam Retardman settings
+    # OpenAI Vision settings
     openai_api_key: str
     openai_model: str = "gpt-5.2-2025-12-11"
     system_prompt_path: Path = Path("./prompts/system.txt")
@@ -25,5 +26,4 @@ class Settings(BaseSettings):
     pushover_api_token: Optional[str] = None
 
 
-# Singleton (me fr)
 settings = Settings()

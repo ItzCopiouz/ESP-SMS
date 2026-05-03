@@ -1,6 +1,6 @@
 import json
-import time
 import logging
+import time
 from pathlib import Path
 
 from app.config import settings
@@ -15,11 +15,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def get_results_dir() -> Path:
     """Get (and create) the results directory."""
     results_dir = settings.data_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
     return results_dir
+
 
 def process_job(job: dict) -> None:
     """Process a single job: analyze image, save results, notify."""
@@ -29,27 +31,20 @@ def process_job(job: dict) -> None:
     logger.info(f"Processing job: {job_id}")
 
     try:
-        #vision
         result = analyze_image(image_path)
-
-        #save results
         results_dir = get_results_dir()
 
         json_path = results_dir / f"{job_id}.json"
         txt_path = results_dir / f"{job_id}.txt"
 
-        #save raw json
-        with open(json_path, "w") as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(result["raw_response"], f, indent=4)
 
-        #save text
-        with open(txt_path, "w") as f:
+        with open(txt_path, "w", encoding="utf-8") as f:
             f.write(result["text"])
 
-        # Mark job as complete
         complete_job(job_id, str(json_path), str(txt_path))
 
-        # Send notification
         result_url = f"{settings.base_url}/api/v1/results/{job_id}"
         send_notification(result["text"], result_url)
 
@@ -71,15 +66,12 @@ def run_worker() -> None:
 
     logger.info("Worker started, watching for jobs...")
     while True:
-        # Claim next job
         job = claim_next_job()
         if job:
             process_job(job)
         else:
-            #wait before try
             time.sleep(2)
 
 
 if __name__ == "__main__":
     run_worker()
-    
