@@ -1,9 +1,4 @@
-# ESP-SMS
-
-ESP32-CAM image capture pipeline with a FastAPI backend, OpenAI Vision analysis,
-SQLite job tracking, and Pushover notifications.
-
-## What It Does
+# ESP SMS
 
 1. An ESP32-CAM wakes from deep sleep, connects to WiFi, captures a JPEG, and
    posts it to the backend.
@@ -12,17 +7,6 @@ SQLite job tracking, and Pushover notifications.
    stores the response.
 4. Pushover sends the analysis result to a phone. Device heartbeat telemetry is
    also stored and can trigger low-battery alerts.
-
-## Repository Layout
-
-```text
-app/                 FastAPI backend, SQLite helpers, worker, notifications
-firmware/            ESP-IDF project for the ESP32-CAM
-prompts/             System prompt used for image analysis
-scripts/             Local utility scripts
-Dockerfile           Backend image for API and worker containers
-docker-compose.yml   Local deployment for API, worker, and persistent data
-```
 
 ## Backend Setup
 
