@@ -3,7 +3,7 @@
 1. An ESP32-CAM wakes from deep sleep, connects to WiFi, captures a JPEG, and
    posts it to the backend.
 2. The FastAPI service saves the image and creates a queued job in SQLite.
-3. A background worker claims queued jobs, sends images to OpenAI Vision, and
+3. A background worker claims queued jobs, sends images to responses api, and
    stores the response.
 4. Pushover sends the analysis result to a phone. Device heartbeat telemetry is
    also stored and can trigger low-battery alerts.
