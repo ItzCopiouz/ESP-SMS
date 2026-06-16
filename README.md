@@ -94,18 +94,3 @@ Requests must include an `X-Device-Id` header and a JPEG request body.
 python scripts/send_test_image.py path/to/photo.jpg
 ```
 
-Override defaults with environment variables:
-
-```bash
-API_URL=http://127.0.0.1:8001/api/v1/capture DEVICE_ID=TEST python scripts/send_test_image.py photo.jpg
-```
-
-## Security Notes
-
-- Do not commit `.env`, `.env.save`, WiFi secrets, captured images, database
-  files, or result files.
-- If real credentials were ever committed, rotate them before relying on this
-  repository.
-- The backend currently trusts any request with an `X-Device-Id` header. Add
-  device authentication before exposing it directly to the public internet.
-
