@@ -58,11 +58,6 @@ Requests must include an `X-Device-Id` header and a JPEG request body.
    idf.py menuconfig
    ```
 
-5. Build and flash:
-
-   ```bash
-   idf.py build
-   idf.py -p /dev/ttyUSB0 flash monitor
    ```
 
 ## API Endpoints
@@ -71,10 +66,3 @@ Requests must include an `X-Device-Id` header and a JPEG request body.
 - `GET /api/v1/results/{job_id}`: returns job status and result paths.
 - `POST /api/v1/heartbeat`: records device telemetry.
 - `GET /api/v1/heartbeat/{device_id}`: returns the latest heartbeat for a device.
-
-## Local Test Upload
-
-```bash
-python scripts/send_test_image.py path/to/photo.jpg
-```
-
